@@ -20,7 +20,7 @@ export function AddAssignmentDialog({ onAddAssignment }: AddAssignmentDialogProp
       setAssignment("");
       setOpen(false);
     }
-  };
+};
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
