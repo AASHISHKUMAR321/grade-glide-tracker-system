@@ -6,17 +6,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Edit3, Save, X, Trash2, Plus } from "lucide-react";
 import { useState } from "react";
 import { AddCompetencyDialog } from "@/components/AddCompetencyDialog";
+import { Subject as ApiSubject, Competency as ApiCompetency } from "@/types/models";
 
-interface Competency {
-  id: string;
-  name: string;
-  marks: number;
-}
+// Define local interfaces that match the component expectations
+interface Competency extends ApiCompetency {}
 
-interface Subject {
-  id: string;
-  name: string;
-  description: string;
+interface Subject extends ApiSubject {
   competencies: Competency[];
 }
 
