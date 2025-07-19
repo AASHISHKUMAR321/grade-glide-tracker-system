@@ -122,8 +122,8 @@ async function runTests() {
       try {
         await axios.get(`${API_URL}/competencies/${competencyId}`);
         logTest('Delete Competency', false);
-      } catch (error) {
-        logTest('Delete Competency', error.response.status === 404);
+      } catch (error: any) {
+        logTest('Delete Competency', error.response?.status === 404);
       }
     } catch (error) {
       logTest('Delete Competency', false, error);
@@ -143,16 +143,16 @@ async function runTests() {
       try {
         await axios.get(`${API_URL}/subjects/${subjectId}`);
         logTest('Delete Subject', false);
-      } catch (subjectError) {
+      } catch (subjectError: any) {
         // Try to get the competency - should also fail if cascade delete worked
         try {
           await axios.get(`${API_URL}/competencies/${newCompetencyId}`);
           logTest('Cascade Delete Competencies', false);
-        } catch (compError) {
-          logTest('Cascade Delete Competencies', compError.response.status === 404);
+        } catch (compError: any) {
+          logTest('Cascade Delete Competencies', compError.response?.status === 404);
         }
         
-        logTest('Delete Subject', subjectError.response.status === 404);
+        logTest('Delete Subject', subjectError.response?.status === 404);
       }
     } catch (error) {
       logTest('Delete Subject', false, error);
@@ -162,8 +162,8 @@ async function runTests() {
     try {
       await axios.post(`${API_URL}/subjects`, { description: 'No name provided' });
       logTest('Validation - Subject without name', false);
-    } catch (error) {
-      logTest('Validation - Subject without name', error.response.status === 400);
+    } catch (error: any) {
+      logTest('Validation - Subject without name', error.response?.status === 400);
     }
 
     // Test 13: Validation test - create competency with invalid marks
@@ -175,8 +175,8 @@ async function runTests() {
       };
       await axios.post(`${API_URL}/competencies`, invalidCompetency);
       logTest('Validation - Competency with invalid marks', false);
-    } catch (error) {
-      logTest('Validation - Competency with invalid marks', error.response.status === 400);
+    } catch (error: any) {
+      logTest('Validation - Competency with invalid marks', error.response?.status === 400);
     }
 
     console.log('API tests completed!');
