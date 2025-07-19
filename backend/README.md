@@ -1,85 +1,91 @@
-# Grade System Backend
+# Evaluation Management System Backend
 
-This is the backend API for the Grade System application, built with Node.js, Express, TypeScript, and MySQL.
+A Node.js backend for an evaluation management system that allows teachers/interviewers to create subjects and competencies with associated marks.
 
-## Setup
+## Features
+
+- Create, read, update, and delete subjects
+- Create, read, update, and delete competencies under subjects
+- Input validation for all endpoints
+- Custom exception handling
+- Logging at multiple levels (info, debug, error)
+- MySQL database integration using Drizzle ORM
+- Class-based architecture
+
+## Tech Stack
+
+- Node.js
+- TypeScript
+- Express.js
+- Drizzle ORM
+- MySQL
+- Winston (for logging)
+- Express Validator (for input validation)
+
+## Project Structure
+
+```
+backend/
+├── src/
+│   ├── config/         # Configuration files
+│   ├── controllers/    # Request handlers
+│   ├── db/             # Database connection and schema
+│   ├── interfaces/     # TypeScript interfaces
+│   ├── middlewares/    # Express middlewares
+│   ├── models/         # Data models
+│   ├── routes/         # API routes
+│   ├── utils/          # Utility functions
+│   ├── validators/     # Request validation
+│   ├── app.ts          # Express app setup
+│   └── index.ts        # Entry point
+├── .env                # Environment variables
+├── package.json        # Dependencies
+└── tsconfig.json       # TypeScript configuration
+```
+
+## Getting Started
 
 ### Prerequisites
 
 - Node.js (v14 or higher)
-- MySQL (v5.7 or higher)
+- MySQL database
 
 ### Installation
 
 1. Clone the repository
-2. Navigate to the backend directory
-3. Install dependencies:
-
-```bash
-npm install
-```
-
-4. Create a `.env` file in the root of the backend directory with the following variables:
-
-```
-PORT=5000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=grade_system
-DB_PORT=3306
-```
-
-5. Initialize the database:
-
-```bash
-npx ts-node src/utils/initDb.ts
-```
-
-### Development
-
-To start the development server:
-
-```bash
-npm run dev
-```
-
-This will start the server with nodemon, which will automatically restart when changes are detected.
-
-### Production
-
-To build for production:
-
-```bash
-npm run build
-```
-
-To start the production server:
-
-```bash
-npm start
-```
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Configure environment variables in `.env` file
+4. Run database migrations:
+   ```
+   npm run migrate
+   ```
+5. Start the server:
+   ```
+   npm run dev
+   ```
 
 ## API Endpoints
 
-### Health Check
+### Subjects
 
-- `GET /api/health` - Check API and database health
+- `GET /api/subjects` - Get all subjects
+- `GET /api/subjects/:id` - Get a subject by ID
+- `POST /api/subjects` - Create a new subject
+- `PUT /api/subjects/:id` - Update a subject
+- `DELETE /api/subjects/:id` - Delete a subject and its competencies
 
-### Students
+### Competencies
 
-- `GET /api/students` - Get all students
-- `GET /api/students/:id` - Get a specific student
-- `POST /api/students` - Create a new student
-- `PUT /api/students/:id` - Update a student
-- `DELETE /api/students/:id` - Delete a student
+- `GET /api/competencies` - Get all competencies
+- `GET /api/competencies?subjectId=<id>` - Get competencies by subject ID
+- `GET /api/competencies/:id` - Get a competency by ID
+- `POST /api/competencies` - Create a new competency
+- `PUT /api/competencies/:id` - Update a competency
+- `DELETE /api/competencies/:id` - Delete a competency
 
-## Database Schema
+## License
 
-The database includes the following tables:
-
-- `students` - Student information
-- `courses` - Course information
-- `assignments` - Assignment information
-- `enrollments` - Student course enrollments
-- `grades` - Student grades for assignments
+This project is licensed under the ISC License.

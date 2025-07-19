@@ -1,49 +1,83 @@
-import express, { Express, Request, Response } from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import { testConnection } from './config/db';
+import { Server } from 'http';
+import app from './app';
+import config from './config/config';
+import logger from './utils/logger';
+import Database from './db/connection';
 
-// Load environment variables
-dotenv.config();
+/**
+ * Server class for managing the application server
+ */
+class ServerManager {
+  private server: Server | null = null;
+  private db: Database;
 
-// Create Express application
-const app: Express = express();
-const port = process.env.PORT || 5000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Test route
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Welcome to the Grade System API' });
-});
-
-// Import routes
-import studentRoutes from './routes/students';
-import healthRoutes from './routes/health';
-
-// Use routes
-app.use('/api/health', healthRoutes);
-app.use('/api/students', studentRoutes);
-// app.use('/api/assignments', require('./routes/assignments'));
-// app.use('/api/grades', require('./routes/grades'));
-
-// Start the server
-const startServer = async () => {
-  try {
-    // Test database connection
-    await testConnection();
-    
-    // Start listening
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+  /**
+   * Initialize server manager
+   */
+  constructor() {
+    this.db = Database.getInstance();
   }
-};
 
-startServer();
+  /**
+   * Start the server and connect to database
+   */
+  public async start(): Promise<void> {
+    try {
+      // Connect to the database
+      await this.db.connect();
+      logger.info('Connected to MySQL database');
+
+      // Start the server
+      this.server = app.listen(config.port, () => {
+        logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
+      });
+
+      this.setupErrorHandling();
+    } catch (error) {
+      logger.error('Error starting server:', error);
+      process.exit(1);
+    }
+  }
+
+  /**
+   * Setup error handling for the server
+   */
+  private setupErrorHandling(): void {
+    // Handle unhandled rejections
+    process.on('unhandledRejection', (err: Error) => {
+      logger.error('UNHANDLED REJECTION! Shutting down...', err);
+      this.shutdown(1);
+    });
+
+    // Handle SIGTERM signal
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM received. Shutting down gracefully');
+      this.shutdown(0);
+    });
+
+    // Handle SIGINT signal (Ctrl+C)
+    process.on('SIGINT', () => {
+      logger.info('SIGINT received. Shutting down gracefully');
+      this.shutdown(0);
+    });
+  }
+
+  /**
+   * Gracefully shutdown the server
+   */
+  private shutdown(exitCode: number): void {
+    if (this.server) {
+      this.server.close(async () => {
+        await this.db.disconnect();
+        logger.info(`Process terminated with exit code ${exitCode}!`);
+        process.exit(exitCode);
+      });
+    } else {
+      process.exit(exitCode);
+    }
+  }
+}
+
+// Create and start server
+const serverManager = new ServerManager();
+serverManager.start();
