@@ -62,10 +62,10 @@ export function AddCompetencyDialog({ onAddCompetency }: AddCompetencyDialogProp
               type="number"
               value={marks || ""}
               onChange={(e) => setMarks(Number(e.target.value))}
-              placeholder="Enter marks (1-100)"
+              placeholder="Enter marks (0-10)"
               className="w-full"
-              min="1"
-              max="100"
+              min="0"
+              max="10"
               required
             />
           </div>
