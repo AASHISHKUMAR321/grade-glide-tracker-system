@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { SubjectCard } from "@/components/SubjectCard";
 import { EvaluationStats } from "@/components/EvaluationStats";
 import { AddSubjectDialog } from "@/components/AddSubjectDialog";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, BookOpen } from "lucide-react";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useCompetencies } from "@/hooks/useCompetencies";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Subject as ApiSubject, Competency as ApiCompetency } from "@/types/models";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -35,6 +35,9 @@ const IndexWithProvider = () => (
 );
 
 const Index = () => {
+  // Access the queryClient instance
+  const queryClient = useQueryClient();
+  
   // Use our custom hooks for subjects and competencies
   const { 
     subjects = [], 
@@ -55,20 +58,16 @@ const Index = () => {
   // Local state for search
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Prepare subjects with their competencies
-  const [enrichedSubjects, setEnrichedSubjects] = useState<Subject[]>([]);
-
-  // Enrich subjects with their competencies
-  useEffect(() => {
-    if (subjects.length > 0 && competencies.length > 0) {
-      const enriched = subjects.map(subject => ({
+  // Directly compute enriched subjects from React Query state
+  // This ensures the UI updates whenever subjects or competencies change
+  const enrichedSubjects = useMemo(() => {
+    if (subjects.length > 0) {
+      return subjects.map(subject => ({
         ...subject,
-        competencies: competencies.filter(comp => comp.subjectId === subject.id)
+        competencies: competencies.filter(comp => comp.subjectId === subject.id) || []
       })) as Subject[];
-      setEnrichedSubjects(enriched);
-    } else if (subjects.length > 0) {
-      setEnrichedSubjects(subjects.map(subject => ({ ...subject, competencies: [] })) as Subject[]);
     }
+    return [] as Subject[];
   }, [subjects, competencies]);
 
   // Filter subjects based on search term
@@ -88,7 +87,12 @@ const Index = () => {
 
   const deleteSubject = async (subjectId: string) => {
     try {
+      // Call the delete mutation and force a refetch of subjects
       await deleteSubjectMutation.mutateAsync(subjectId);
+      
+      // Force a refetch to ensure the UI is updated
+      queryClient.invalidateQueries({ queryKey: ['subjects'] });
+      queryClient.refetchQueries({ queryKey: ['subjects'] });
     } catch (error) {
       console.error("Failed to delete subject:", error);
     }
@@ -130,7 +134,16 @@ const Index = () => {
 
   const deleteCompetency = async (subjectId: string, competencyId: string) => {
     try {
+      // Call the delete mutation
       await deleteCompetencyMutation.mutateAsync(competencyId);
+      
+      // Force a refetch to ensure the UI is updated
+      queryClient.invalidateQueries({ queryKey: ['competencies'] });
+      queryClient.refetchQueries({ queryKey: ['competencies'] });
+      
+      // Also refetch subject-specific competencies
+      queryClient.invalidateQueries({ queryKey: ['competencies', 'subject', subjectId] });
+      queryClient.refetchQueries({ queryKey: ['competencies', 'subject', subjectId] });
     } catch (error) {
       console.error("Failed to delete competency:", error);
     }

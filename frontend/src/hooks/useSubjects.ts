@@ -25,7 +25,12 @@ export const useSubjects = () => {
   // Create subject
   const createSubject = useMutation({
     mutationFn: (subject: CreateSubjectDto) => subjectService.createSubject(subject),
-    onSuccess: () => {
+    onSuccess: (newSubject) => {
+      // Immediately update the cache with the new subject
+      queryClient.setQueryData(['subjects'], (oldData: any) => {
+        return oldData ? [...oldData, newSubject] : [newSubject];
+      });
+      // Then invalidate to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
     },
   });
@@ -42,7 +47,27 @@ export const useSubjects = () => {
   // Delete subject
   const deleteSubject = useMutation({
     mutationFn: (id: string) => subjectService.deleteSubject(id),
-    onSuccess: () => {
+    onMutate: async (deletedId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['subjects'] });
+      
+      // Snapshot the previous value
+      const previousSubjects = queryClient.getQueryData(['subjects']);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(['subjects'], (oldData: any) => {
+        return oldData ? oldData.filter((subject: any) => subject.id !== deletedId) : [];
+      });
+      
+      // Return a context object with the snapshot
+      return { previousSubjects };
+    },
+    onError: (err, deletedId, context: any) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['subjects'], context.previousSubjects);
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
     },
   });
